@@ -1,5 +1,33 @@
 [
   {
+    "slug": "tatarruf",
+    "url": "https://sabq.org/opinion/ja4ea1t",
+    "title": "التطرف في حب السعودية",
+    "date": "2026-10-17",
+    "cards": [
+      {
+        "image": "https://raw.githubusercontent.com/AlaaHejazi90/maqalat/main/tatarruf-1.jpg",
+        "quote": "الأوطان لا يحميها الجميع بالطريقة نفسها، لكنها تصبح أقوى عندما يؤدي الجميع أدوارهم المختلفة للسبب نفسه"
+      },
+      {
+        "image": "https://raw.githubusercontent.com/AlaaHejazi90/maqalat/main/tatarruf-2.jpg",
+        "quote": "أن نتطرف في حب هذا الوطن؛ لا بكراهية غيرنا، ولا بالصراخ أكثر من الآخرين، وإنما بأن نبالغ في أداء مسؤولياتنا تجاهه"
+      },
+      {
+        "image": "https://raw.githubusercontent.com/AlaaHejazi90/maqalat/main/tatarruf-3.jpg",
+        "quote": "من السهل أن تقول إنك تحب وطنك، لكن الاختبار الحقيقي يبدأ عندما يصبح لهذا الحب ثمن"
+      },
+      {
+        "image": "https://raw.githubusercontent.com/AlaaHejazi90/maqalat/main/tatarruf-4.jpg",
+        "quote": "يختلف السعوديون في آرائهم وتفاصيلهم لكنهم يتفقون على ما هو أكبر من كل اختلافاتهم وهو «السعودية»"
+      },
+      {
+        "image": "https://raw.githubusercontent.com/AlaaHejazi90/maqalat/main/tatarruf-5.jpg",
+        "quote": "تماسك الدول لا تصنعه مؤسسة واحدة، مهما بلغت قوته، وإنما منظومة كاملة يعرف فيها كل شخص أين يقف وماذا يفعل"
+      }
+    ]
+  },
+  {
     "slug": "alhay-yuhyik",
     "url": "https://sabq.org/opinion/flt8oeq",
     "title": "الحي يحييك.. والميت يزيدك غبن",
