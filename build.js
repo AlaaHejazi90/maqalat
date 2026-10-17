@@ -41,6 +41,7 @@ articles.forEach((a, i) => {
   if (!a.url || !/^https?:\/\//.test(a.url)) fail(`${n}: رابط المقالة (url) ناقص أو غلط.`);
   if (!a.title) fail(`${n}: العنوان (title) ناقص.`);
 });
+articles.forEach((a) => { const c0 = Array.isArray(a.cards) && a.cards[0]; if (c0) { if (!a.image) a.image = c0.image; if (!a.description) a.description = c0.quote; } });
 articles.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 
 // ---------- أدوات ----------
@@ -73,11 +74,13 @@ fs.mkdirSync(OUT, { recursive: true });
 if (fs.existsSync(path.join(ROOT, "images"))) fs.cpSync(path.join(ROOT, "images"), path.join(OUT, "images"), { recursive: true });
 
 // ---------- 1) صفحة التحويل لكل مقالة: /a/slug ----------
-for (const a of articles) {
-  const img = abs(a.image);
-  const desc = a.description || config.intro || "";
+function redirectPage(a, sub, image, description) {
+  const img = abs(image);
+  const desc = description || config.intro || "";
+  const purl = pageUrl(a) + (sub ? "/" + sub : "");
+  const cpath = "/" + a.slug + (sub ? "/" + sub : "");
   write(
-    `a/${a.slug}/index.html`,
+    `a/${a.slug}${sub ? "/" + sub : ""}/index.html`,
     `<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -91,7 +94,7 @@ for (const a of articles) {
 <meta property="og:locale" content="ar_AR">
 <meta property="og:title" content="${esc(a.title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta property="og:url" content="${esc(pageUrl(a))}">
+<meta property="og:url" content="${esc(purl)}">
 ${img ? `<meta property="og:image" content="${esc(img)}">\n<meta name="twitter:image" content="${esc(img)}">` : ""}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(a.title)}">
@@ -111,13 +114,17 @@ a{color:#0b7a5a}
 ${counterJs}
 var q=new URLSearchParams(location.search);
 var src=(q.get("src")||"direct").toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,20)||"direct";
-count("/${a.slug}/"+src, ${js(a.title)});
+count("${cpath}/"+src, ${js(a.title)});
 location.replace(${js(a.url)});
 })();
 </script>
 </body>
 </html>`
   );
+}
+for (const a of articles) {
+  redirectPage(a, "", a.image, a.description);
+  (Array.isArray(a.cards) ? a.cards : []).forEach((c, i) => redirectPage(a, String(i + 1), c.image || a.image, c.quote || a.description));
 }
 
 // ---------- 2) الصفحة الرئيسية: قائمة المقالات (تظهر في قوقل) ----------
@@ -214,14 +221,11 @@ document.querySelectorAll("a[data-slug]").forEach(function(el){
 // ---------- 3) صفحة الروابط والقوالب (لك أنت فقط): /links ----------
 const channels = config.channels || {};
 const templates = config.templates || {};
-const linksData = articles.map((a) => ({
-  slug: a.slug,
-  title: a.title,
-  description: a.description || "",
-  hook: a.hook || "",
-  date: fmtDate(a.date),
-  link: pageUrl(a),
-}));
+const linksData = articles.flatMap((a) => {
+  const base = { slug: a.slug, title: a.title, description: a.description || "", hook: a.hook || "", date: fmtDate(a.date), link: pageUrl(a) };
+  if (!Array.isArray(a.cards) || !a.cards.length) return [base];
+  return a.cards.map((c, i) => ({ ...base, label: "بطاقة " + (i + 1) + ": " + (c.quote || ""), hook: c.quote || base.hook, description: c.quote || base.description, link: pageUrl(a) + "/" + (i + 1) }));
+});
 
 write(
   "links/index.html",
@@ -275,7 +279,7 @@ ARTS.forEach(function(a){
   var box=document.createElement("section");box.className="art";
   box.innerHTML="<h2></h2><div class='d'></div>";
   box.querySelector("h2").textContent=a.title;
-  box.querySelector(".d").textContent=a.date;
+  box.querySelector(".d").textContent=(a.label?a.label+" · ":"")+a.date;
   Object.keys(CH).forEach(function(k){
     var link=a.link+"?src="+k;
     var row=document.createElement("div");row.className="row";
