@@ -221,10 +221,12 @@ document.querySelectorAll("a[data-slug]").forEach(function(el){
 // ---------- 3) صفحة الروابط والقوالب (لك أنت فقط): /links ----------
 const channels = config.channels || {};
 const templates = config.templates || {};
-const linksData = articles.flatMap((a) => {
-  const base = { slug: a.slug, title: a.title, description: a.description || "", hook: a.hook || "", date: fmtDate(a.date), iso: a.date || "", link: pageUrl(a) };
-  if (!Array.isArray(a.cards) || !a.cards.length) return [base];
-  return a.cards.map((c, i) => ({ ...base, label: "بطاقة " + (i + 1) + ": " + (c.quote || ""), hook: c.quote || base.hook, description: c.quote || base.description, link: pageUrl(a) + "/" + (i + 1) }));
+const linksData = articles.map((a) => {
+  const cards = Array.isArray(a.cards) ? a.cards : [];
+  const variants = cards.length
+    ? cards.map((c, i) => ({ label: "بطاقة " + (i + 1), quote: c.quote || "", hook: c.quote || a.hook || "", description: c.quote || a.description || "", link: pageUrl(a) + "/" + (i + 1) }))
+    : [{ label: "", quote: "", hook: a.hook || "", description: a.description || "", link: pageUrl(a) }];
+  return { slug: a.slug, title: a.title, url: a.url, image: abs(a.image), date: fmtDate(a.date), iso: a.date || "", variants };
 });
 
 write(
@@ -235,33 +237,57 @@ write(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>الروابط والقوالب</title>
+<title>روابط المقالات</title>
 <style>
-:root{--bg:#f7f7f5;--card:#fff;--text:#1f1f1f;--muted:#666;--accent:#0b7a5a;--line:#e6e6e2}
-@media (prefers-color-scheme:dark){:root{--bg:#121212;--card:#1d1d1d;--text:#eee;--muted:#aaa;--accent:#4cc79d;--line:#2c2c2c}}
+:root{--bg:#f4f3f0;--card:#fff;--soft:#f8f7f4;--text:#1f1d1a;--muted:#6b665e;--accent:#0b7a5a;--accent-fg:#fff;--line:#e4e1da;--ok:#2e7d32}
+@media (prefers-color-scheme:dark){:root{--bg:#121211;--card:#1c1b19;--soft:#232220;--text:#efece6;--muted:#a59f95;--accent:#4cc79d;--accent-fg:#0f1f19;--line:#2e2c29;--ok:#6cc08f}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;line-height:1.6}
-.wrap{max-width:860px;margin:0 auto;padding:32px 16px 48px}
-h1{margin:0 0 4px}
-.hint{color:var(--muted);margin:0 0 24px}
-.art{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:20px}
-.art h2{font-size:1.1rem;margin:0 0 4px}
-.art .d{color:var(--muted);font-size:.85rem;margin-bottom:12px}
-.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
-.row b{min-width:110px}
-.row code{flex:1 1 220px;direction:ltr;text-align:left;font-size:.85rem;background:var(--bg);padding:6px 8px;border-radius:8px;overflow-wrap:anywhere}
-button{font:inherit;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer}
-button.main{background:var(--accent);color:#fff}
-.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}.tab{border-radius:999px}.tab[aria-pressed="true"]{background:var(--accent);color:#fff}
-button.ok{background:#2e7d32;border-color:#2e7d32;color:#fff}
-${GC ? "" : ".warn{background:#fff4d6;color:#6b4e00;border-radius:10px;padding:10px 14px;margin-bottom:20px}@media (prefers-color-scheme:dark){.warn{background:#3a3000;color:#ffe08a}}"}
+.wrap{max-width:960px;margin:0 auto;padding:28px 16px 56px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px 16px;margin-bottom:18px}
+h1{margin:0;font-size:1.6rem}
+.stats{font-size:.9rem;color:var(--muted)}
+.stats a{color:var(--accent);font-weight:600;text-decoration:none}
+.warn{background:#fff4d6;color:#6b4e00;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;scrollbar-width:thin}
+.tab{flex:0 0 auto;font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:7px 16px;cursor:pointer;white-space:nowrap}
+.tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+.art{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:22px}
+.head{display:flex;gap:16px;align-items:center;padding:16px;border-bottom:1px solid var(--line)}
+.head img{width:132px;aspect-ratio:16/9;object-fit:cover;border-radius:10px;flex:0 0 auto;background:var(--soft)}
+.head .t{min-width:0}
+.head h2{margin:0 0 4px;font-size:1.15rem;line-height:1.5;text-wrap:balance}
+.head .m{font-size:.85rem;color:var(--muted)}
+.head .m a{color:var(--accent);text-decoration:none;font-weight:600}
+@media (max-width:520px){.head{gap:12px}.head img{width:96px}}
+.variant{padding:16px}
+.variant+.variant{border-top:1px dashed var(--line)}
+.vlabel{display:flex;gap:10px;align-items:baseline;margin-bottom:12px}
+.vlabel b{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:.8rem;white-space:nowrap}
+.vlabel span{color:var(--muted);font-size:.9rem}
+.grid{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tile{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:10px 14px;background:var(--soft)}
+.tile+.tile{border-top:1px solid var(--line)}
+.tile .n{display:flex;align-items:center;gap:8px;font-weight:600;min-width:150px}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.tile .n small{margin-inline-start:auto;color:var(--muted);font-weight:400;direction:ltr;font-family:ui-monospace,Menlo,monospace;font-size:.75rem}
+.btns{display:flex;gap:8px}
+.btns .b{min-width:110px}
+@media (max-width:520px){.tile{flex-direction:column;align-items:stretch}.btns{display:grid;grid-template-columns:1fr 1fr}.btns .b{min-width:0}}
+button.b{font:inherit;font-size:.85rem;border-radius:9px;padding:8px 6px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
+button.b.main{background:var(--accent);color:var(--accent-fg)}
+button.b.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>الروابط والقوالب</h1>
-<p class="hint">لكل قناة رابط خاص عشان نعرف كم ضغطة جت منها. «نسخ المنشور» ينسخ النص مع الرابط جاهز للصق.</p>
-${GC ? `<p class="hint">📊 الإحصائيات: <a href="https://${esc(GC)}.goatcounter.com" target="_blank" rel="noopener">${esc(GC)}.goatcounter.com</a></p>` : `<div class="warn">العدّاد غير مفعّل. أضف اسم حساب GoatCounter في config.json (الحقل goatcounter).</div>`}
+<header>
+  <h1>روابط المقالات</h1>
+  ${GC ? `<div class="stats">📊 الإحصائيات: <a href="https://${esc(GC)}.goatcounter.com" target="_blank" rel="noopener">${esc(GC)}.goatcounter.com</a></div>` : ""}
+</header>
+${GC ? "" : `<div class="warn">العدّاد غير مفعّل. أضف اسم حساب GoatCounter في config.json.</div>`}
+<div class="tabs" id="tabs" role="group" aria-label="الأسابيع"></div>
 <div id="list"></div>
 </div>
 <script>
@@ -269,38 +295,35 @@ var ARTS=${js(linksData)};
 var CH=${js(channels)};
 var TPL=${js(templates)};
 var AUTHOR=${js(config.author)};
-function fill(t,a,link){return t.replace(/\\{(\\w+)\\}/g,function(m,k){return k==="link"?link:k==="author"?AUTHOR:(a[k]!=null?a[k]:"")}).replace(/\\n{3,}/g,"\\n\\n").trim()}
-function copy(text,btn){
-  var done=function(){var o=btn.textContent;btn.classList.add("ok");btn.textContent="تم النسخ ✓";setTimeout(function(){btn.classList.remove("ok");btn.textContent=o},1500)};
-  if(navigator.clipboard){navigator.clipboard.writeText(text).then(done,function(){fallback(text);done()})}else{fallback(text);done()}
-}
+var COLORS={wa:"#25D366",li:"#0A66C2",x:"#888",tg:"#229ED9",em:"#c4683e"};
+var NL=String.fromCharCode(10);
+function fill(t,a,v,link){var vals={title:a.title,hook:v.hook,description:v.description,link:link,author:AUTHOR};Object.keys(vals).forEach(function(k){t=t.split("{"+k+"}").join(vals[k]||"")});while(t.indexOf(NL+NL+NL)>-1)t=t.split(NL+NL+NL).join(NL+NL);return t.trim()}
+function copy(text,btn){var done=function(){var o=btn.textContent;btn.classList.add("ok");btn.textContent="تم النسخ ✓";setTimeout(function(){btn.classList.remove("ok");btn.textContent=o},1500)};if(navigator.clipboard){navigator.clipboard.writeText(text).then(done,function(){fallback(text);done()})}else{fallback(text);done()}}
 function fallback(text){var t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy")}catch(e){}t.remove()}
-var root=document.getElementById("list");
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
 function wk(d){if(!d)return "0";var t=new Date(d+"T12:00:00Z");if(isNaN(t))return "0";t.setUTCDate(t.getUTCDate()-((t.getUTCDay()+1)%7));return t.toISOString().slice(0,10)}
 var groups={};ARTS.forEach(function(a){var k=wk(a.iso);(groups[k]=groups[k]||[]).push(a)});
 var keys=Object.keys(groups).sort().reverse();
-var tabs=document.createElement("div");tabs.className="tabs";tabs.setAttribute("role","group");root.append(tabs);
-var panes={};
-keys.forEach(function(k,i){var b=document.createElement("button");b.type="button";b.className="tab";b.textContent=i===0?"الأسبوع الحالي":(k==="0"?"بدون تاريخ":"أسبوع "+new Date(k+"T12:00:00Z").toLocaleDateString("ar-SA-u-ca-gregory",{day:"numeric",month:"long",year:"numeric"}));b.onclick=function(){show(k)};tabs.append(b);var p=document.createElement("div");root.append(p);panes[k]={b:b,p:p}});
+var tabs=document.getElementById("tabs"),root=document.getElementById("list"),panes={};
+keys.forEach(function(k,i){var b=el("button","tab",i===0?"الأسبوع الحالي":(k==="0"?"بدون تاريخ":"أسبوع "+new Date(k+"T12:00:00Z").toLocaleDateString("ar-SA-u-ca-gregory",{day:"numeric",month:"long"})));b.type="button";b.onclick=function(){show(k)};tabs.append(b);var p=el("div");root.append(p);panes[k]={b:b,p:p}});
 function show(k){keys.forEach(function(x){panes[x].p.hidden=x!==k;panes[x].b.setAttribute("aria-pressed",String(x===k))})}
+ARTS.forEach(function(a){
+  var box=el("section","art"),head=el("div","head");
+  if(a.image){var im=el("img");im.src=a.image;im.alt="";im.loading="lazy";head.append(im)}
+  var t=el("div","t");t.append(el("h2",null,a.title));var m=el("div","m",a.date+" · ");var s=el("a",null,"افتح في سبق ↗");s.href=a.url;s.target="_blank";s.rel="noopener";m.append(s);t.append(m);head.append(t);box.append(head);
+  a.variants.forEach(function(v){
+    var sec=el("div","variant");
+    if(v.label){var l=el("div","vlabel");l.append(el("b",null,v.label));l.append(el("span",null,v.quote));sec.append(l)}
+    var g=el("div","grid");
+    Object.keys(CH).forEach(function(k){
+      var link=v.link+"?src="+k,tile=el("div","tile"),n=el("div","n"),dot=el("span","dot");dot.style.background=COLORS[k]||"var(--accent)";
+      n.append(dot,el("span",null,CH[k]),el("small",null,"src="+k));
+      var bt=el("div","btns"),b1=el("button","b","نسخ الرابط");b1.type="button";b1.title=link;b1.onclick=function(){copy(link,b1)};bt.append(b1);
+      if(TPL[k]){var b2=el("button","b main","نسخ المنشور");b2.type="button";b2.onclick=function(){copy(fill(TPL[k],a,v,link),b2)};bt.append(b2)}
+      tile.append(n,bt);g.append(tile)});
+    sec.append(g);box.append(sec)});
+  panes[wk(a.iso)].p.append(box)});
 if(keys.length)show(keys[0]);
-ARTS.forEach(function(a){var list=panes[wk(a.iso)].p;
-  var box=document.createElement("section");box.className="art";
-  box.innerHTML="<h2></h2><div class='d'></div>";
-  box.querySelector("h2").textContent=a.title;
-  box.querySelector(".d").textContent=(a.label?a.label+" · ":"")+a.date;
-  Object.keys(CH).forEach(function(k){
-    var link=a.link+"?src="+k;
-    var row=document.createElement("div");row.className="row";
-    var b=document.createElement("b");b.textContent=CH[k];
-    var c=document.createElement("code");c.textContent=link;
-    var b1=document.createElement("button");b1.textContent="نسخ الرابط";b1.onclick=function(){copy(link,b1)};
-    row.append(b,c,b1);
-    if(TPL[k]){var b2=document.createElement("button");b2.className="main";b2.textContent="نسخ المنشور";b2.onclick=function(){copy(fill(TPL[k],a,link),b2)};row.append(b2)}
-    box.append(row);
-  });
-  list.append(box);
-});
 </script>
 </body>
 </html>`
